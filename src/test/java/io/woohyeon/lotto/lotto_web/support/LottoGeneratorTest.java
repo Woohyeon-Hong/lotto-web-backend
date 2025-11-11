@@ -1,11 +1,11 @@
-package lotto.support;
+package io.woohyeon.lotto.lotto_web.support;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.woohyeon.lotto.lotto_web.model.Lotto;
+import io.woohyeon.lotto.lotto_web.model.PurchaseAmount;
 import java.util.HashSet;
 import java.util.List;
-import lotto.model.Lotto;
-import lotto.model.PurchaseAmount;
 import org.junit.jupiter.api.Test;
 
 class LottoGeneratorTest {

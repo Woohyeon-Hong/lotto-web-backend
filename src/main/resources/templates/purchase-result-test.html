@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>발행내역(테스트)</title></head>
+<body>
+<h1>발행내역(테스트)</h1>
+
+<section>
+  <p><strong>발행 수:</strong> <span th:text="${purchase.issuedCount}"></span> 장</p>
+  <h2>발행된 로또 번호</h2>
+  <ol>
+    <li th:each="lotto : ${purchase.issuedLottos}" th:text="${lotto.numbers}"></li>
+  </ol>
+</section>
+
+<section style="margin-top:16px">
+  <h2>다음 단계</h2>
+  <a href="/winning-numbers">당첨입력으로 이동</a>
+</section>
+</body>
+</html>

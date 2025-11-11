@@ -1,4 +1,4 @@
-package lotto.model;
+package io.woohyeon.lotto.lotto_web.model;
 
 import java.util.ArrayList;
 import org.junit.jupiter.api.DisplayName;

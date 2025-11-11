@@ -16,6 +16,10 @@ public class Lotto {
         this.numbers = numbers;
     }
 
+    public List<Integer> getNumbers() {
+        return List.copyOf(numbers);
+    }
+
     private void validate(List<Integer> numbers) {
         validateNumberCount(numbers);
         validateDuplicate(numbers);

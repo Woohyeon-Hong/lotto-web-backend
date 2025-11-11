@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head><meta charset="UTF-8"><title>당첨입력(테스트)</title></head>
+<body>
+<h1>당첨입력(테스트)</h1>
+
+<form action="/results" method="post">
+  <label for="winningNumbers">당첨 번호(쉼표 구분 6개)</label>
+  <input type="text" id="winningNumbers" name="winningNumbers" placeholder="예: 1,2,3,4,5,6" required>
+
+  <label for="bonusNumber">보너스 번호</label>
+  <input type="number" id="bonusNumber" name="bonusNumber" min="1" max="45" required>
+
+  <button type="submit">결과 확인</button>
+</form>
+
+<nav style="margin-top:16px">
+  <a href="/purchase-test.html">구매로 돌아가기</a>
+</nav>
+</body>
+</html>

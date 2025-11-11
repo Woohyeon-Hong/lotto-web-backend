@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head><meta charset="UTF-8"><title>당첨내역(테스트)</title></head>
+<body>
+<h1>당첨내역(테스트)</h1>
+
+<section>
+  <h2>등급별 당첨 개수</h2>
+  <table border="1" cellpadding="6">
+    <thead><tr><th>등급</th><th>개수</th></tr></thead>
+    <tbody>
+    <tr th:each="e : ${result.rankBreakdown}">
+      <td th:text="${e.key}"></td>
+      <td th:text="${e.value}"></td>
+    </tr>
+    </tbody>
+  </table>
+</section>
+
+<section style="margin-top:16px">
+  <p><strong>총 당첨금:</strong> <span th:text="${result.totalPrize}"></span> 원</p>
+  <p><strong>수익률:</strong> <span th:text="${result.returnRate}"></span> %</p>
+</section>
+
+<nav style="margin-top:16px">
+  <a href="/templates/purchase-test.html">새 금액으로 구매하기</a> |
+  <a href="/lottos/winning-numbers">당첨입력 다시 하기</a>
+</nav>
+</body>
+</html>

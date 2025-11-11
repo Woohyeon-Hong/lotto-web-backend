@@ -1,4 +1,4 @@
-package lotto.model;
+package io.woohyeon.lotto.lotto_web.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
