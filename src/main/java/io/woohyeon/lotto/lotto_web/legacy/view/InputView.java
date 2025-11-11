@@ -3,6 +3,7 @@ package io.woohyeon.lotto.lotto_web.legacy.view;
 
 import camp.nextstep.edu.missionutils.Console;
 import io.woohyeon.lotto.lotto_web.model.PurchaseAmount;
+import io.woohyeon.lotto.lotto_web.support.InputParser;
 import java.util.List;
 
 public class InputView {

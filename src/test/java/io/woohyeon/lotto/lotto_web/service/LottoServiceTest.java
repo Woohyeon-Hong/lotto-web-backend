@@ -31,7 +31,7 @@ class LottoServiceTest {
 
         //when
         List<PurchaseResponse> purchaseResponses = Arrays.stream(correctPurchaseAmounts)
-                .mapToObj(this.lottoService::purchaseLottos)
+                .mapToObj(this.lottoService::purchaseLottosWith)
                 .toList();
 
         //then
@@ -46,7 +46,7 @@ class LottoServiceTest {
         Arrays.stream(wrongPurchaseAmounts)
                 .forEach(wrongPurchaseAmount ->
                         assertThatThrownBy(
-                                () -> lottoService.purchaseLottos(wrongPurchaseAmount)
+                                () -> lottoService.purchaseLottosWith(wrongPurchaseAmount)
                         ).isInstanceOf(IllegalArgumentException.class)
                 );
     }

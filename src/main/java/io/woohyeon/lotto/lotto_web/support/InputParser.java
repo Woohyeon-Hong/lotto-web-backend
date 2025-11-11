@@ -1,4 +1,4 @@
-package io.woohyeon.lotto.lotto_web.legacy.view;
+package io.woohyeon.lotto.lotto_web.support;
 
 import java.util.Arrays;
 import java.util.List;
