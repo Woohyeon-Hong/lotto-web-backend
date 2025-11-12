@@ -3,6 +3,9 @@ package io.woohyeon.lotto.lotto_web.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.woohyeon.lotto.lotto_web.dto.request.LottoResultRequest;
+import io.woohyeon.lotto.lotto_web.dto.response.IssuedLotto;
+import io.woohyeon.lotto.lotto_web.dto.response.LottoResultResponse;
 import io.woohyeon.lotto.lotto_web.dto.response.PurchaseResponse;
 import io.woohyeon.lotto.lotto_web.support.LottoRules;
 import java.util.Arrays;
@@ -14,7 +17,7 @@ class LottoServiceTest {
     LottoService lottoService = new LottoService();
 
     @Test
-    void purchaseLottos() {
+    void purchaseLottosWith() {
         //given
         int[] correctPurchaseAmounts = {
                 1000,
@@ -49,5 +52,46 @@ class LottoServiceTest {
                                 () -> lottoService.purchaseLottosWith(wrongPurchaseAmount)
                         ).isInstanceOf(IllegalArgumentException.class)
                 );
+    }
+
+    @Test
+    void calculateStatisticsOf() {
+        // given
+        List<Integer> lottoNumbers = List.of(1, 2, 3, 4, 5, 6);
+        int bonusNumber = 7;
+
+        List<IssuedLotto> issuedLottos = List.of(
+                new IssuedLotto(List.of(1, 2, 3, 4, 5, 6), null), // 1등
+                new IssuedLotto(List.of(1, 2, 3, 4, 5, 7), null), // 2등
+                new IssuedLotto(List.of(1, 2, 3, 4, 5, 8), null), // 3등
+                new IssuedLotto(List.of(1, 2, 3, 4, 8, 9), null)  // 4등
+        );
+
+        LottoResultRequest request = new LottoResultRequest(
+                issuedLottos,
+                lottoNumbers,
+                bonusNumber
+        );
+
+        // when
+        LottoResultResponse result = lottoService.calculateStatisticsOf(request);
+
+        // then
+        // 총 로또 개수는 요청한 issuedLottos의 개수와 같아야 한다.
+        assertThat(result.rankCounts().stream()
+                .mapToLong(entry -> entry.getValue())
+                .sum()).isEqualTo(issuedLottos.size());
+
+        // 수익률은 0 이상이어야 한다.
+        assertThat(result.returnRate()).isGreaterThanOrEqualTo(0);
+
+        // 로또 개수 × LOTTO_PRICE 만큼의 금액을 기준으로 계산된다.
+        int purchaseAmount = issuedLottos.size() * LottoRules.LOTTO_PRICE;
+        assertThat(purchaseAmount).isEqualTo(4000);
+
+        // 1등 로또(1~6 맞춤)가 1장 존재해야 함
+        boolean hasFirstPrize = result.rankCounts().stream()
+                .anyMatch(entry -> entry.getKey().name().equals("FIRST") && entry.getValue() == 1);
+        assertThat(hasFirstPrize).isTrue();
     }
 }

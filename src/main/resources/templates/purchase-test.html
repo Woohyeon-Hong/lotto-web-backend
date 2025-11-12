@@ -1,12 +1,48 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head><meta charset="UTF-8"><title>구매(테스트)</title></head>
+<head>
+    <meta charset="UTF-8">
+    <title>로또 구매 테스트</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; }
+        .info { margin-top: 8px; font-size: 14px; color: #333; }
+        .error { color: #d9534f; font-weight: bold; }
+        .valid { color: #5cb85c; font-weight: bold; }
+    </style>
+</head>
 <body>
-<h1>구매(테스트)</h1>
-<form action="" method="post">
-    <label for="purchaseAmount">구매 금액(원)</label>
+<h1>로또 구매 테스트</h1>
+
+<form action="/lottos" method="post">
+    <label for="purchaseAmount">구매 금액 (단위: 원)</label><br>
     <input type="number" id="purchaseAmount" name="purchaseAmount" min="1000" step="1000" required>
-    <button type="submit">로또 발행</button>
+    <div id="feedback" class="info"></div>
+
+    <button type="submit">구매하기</button>
 </form>
+
+<script>
+    const input = document.getElementById("purchaseAmount");
+    const feedback = document.getElementById("feedback");
+    const LOTTO_PRICE = 1000;
+
+    input.addEventListener("input", () => {
+        const value = Number(input.value);
+
+        if (value === 0 || isNaN(value)) {
+            feedback.textContent = "";
+            return;
+        }
+
+        if (value % LOTTO_PRICE !== 0) {
+            feedback.textContent = "1000원 단위로만 입력 가능합니다.";
+            feedback.className = "info error";
+        } else {
+            const count = value / LOTTO_PRICE;
+            feedback.textContent = `총 ${count}장의 로또를 구매할 수 있습니다.`;
+            feedback.className = "info valid";
+        }
+    });
+</script>
 </body>
 </html>
