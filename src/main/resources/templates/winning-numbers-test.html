@@ -1,21 +1,29 @@
 <!DOCTYPE html>
-<html lang="ko">
-<head><meta charset="UTF-8"><title>당첨입력(테스트)</title></head>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>당첨 번호 입력 (테스트)</title>
+  <style>
+    body { font-family: sans-serif; margin: 40px; }
+    .panel { border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 380px; }
+    input { margin-bottom: 8px; width: 100%; padding: 8px; }
+  </style>
+</head>
 <body>
-<h1>당첨입력(테스트)</h1>
 
-<form action="results" method="post">
-  <label for="lottoNumbers">당첨 번호(쉼표 구분 6개)</label>
-  <input type="text" id="lottoNumbers" name="lottoNumbers" placeholder="예: 1,2,3,4,5,6" required>
+<h1>당첨 번호 입력 (테스트)</h1>
 
-  <label for="bonusNumber">보너스 번호</label>
-  <input type="number" id="bonusNumber" name="bonusNumber" min="1" max="45" required>
+<div class="panel">
+  <form action="/lottos/results" method="post">
+    <label>당첨 번호 (쉼표로 구분):</label>
+    <input type="text" name="lottoNumbers" placeholder="예: 1, 5, 12, 23, 35, 40" required>
 
-  <button type="submit">결과 확인</button>
-</form>
+    <label>보너스 번호:</label>
+    <input type="number" name="bonusNumber" min="1" max="45" required>
 
-<nav style="margin-top:16px">
-  <a href="/lottos">구매로 돌아가기</a>
-</nav>
+    <button type="submit">결과 확인하기</button>
+  </form>
+</div>
+
 </body>
 </html>

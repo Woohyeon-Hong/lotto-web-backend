@@ -5,12 +5,14 @@ import io.woohyeon.lotto.lotto_web.dto.response.LottoResultResponse;
 import io.woohyeon.lotto.lotto_web.dto.response.PurchaseResponse;
 import io.woohyeon.lotto.lotto_web.support.InputParser;
 import io.woohyeon.lotto.lotto_web.service.LottoService;
+import io.woohyeon.lotto.lotto_web.support.LottoRules;
 import io.woohyeon.lotto.lotto_web.support.LottoStore;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,6 +46,22 @@ public class LottoController {
 
         return "purchase-result-test";
     }
+
+    @GetMapping("/retry")
+    public String retryPurchase(HttpSession session, Model model) {
+        PurchaseResponse lastPurchase = (PurchaseResponse) session.getAttribute("purchase");
+
+        if (lastPurchase == null) return "redirect:/lottos";
+
+        int retryAmount = lastPurchase.issuedCount() * LottoRules.LOTTO_PRICE;
+        PurchaseResponse newPurchase = lottoService.purchaseLottosWith(retryAmount);
+
+        model.addAttribute("purchase", newPurchase);
+        session.setAttribute("purchase", newPurchase);
+
+        return "purchase-result-test";
+    }
+
 
     @GetMapping("/winning-numbers")
     public String displayWinningForm() {
@@ -79,4 +97,17 @@ public class LottoController {
         model.addAttribute("purchases", lottoStore.findRecentRecords());
         return "purchase-history-test";
     }
+
+    @GetMapping("/retry/{id}")
+    public String retryPurchaseFromHistory(@PathVariable("id") int id, Model model, HttpSession session) {
+        return lottoStore.findById(id)
+                .map(log -> {
+                    PurchaseResponse newPurchase = lottoService.purchaseLottosWith(log.purchaseAmount());
+                    model.addAttribute("purchase", newPurchase);
+                    session.setAttribute("purchase", newPurchase);
+                    return "purchase-result-test";
+                })
+                .orElse("redirect:/lottos/histories");
+    }
+
 }

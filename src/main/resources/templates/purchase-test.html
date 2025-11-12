@@ -1,28 +1,49 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>로또 구매 테스트</title>
+    <title>로또 구매 (테스트)</title>
     <style>
         body { font-family: sans-serif; margin: 40px; }
-        .info { margin-top: 8px; font-size: 14px; color: #333; }
-        .error { color: #d9534f; font-weight: bold; }
-        .valid { color: #5cb85c; font-weight: bold; }
+        h1 { margin-bottom: 16px; }
+        .panel { border: 1px solid #ddd; padding: 16px; border-radius: 8px; margin-bottom: 20px; }
+        .panel h2 { margin-bottom: 12px; font-size: 18px; }
+        .meta { color: #555; font-size: 0.95em; }
+        .error { color: #c62828; margin-top: 8px; }
+        .hint { color: #666; font-size: 0.9em; }
+        table { border-collapse: collapse; width: 420px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        th { background: #f9f9f9; }
+        .actions { display: flex; gap: 8px; margin-top: 12px; }
     </style>
 </head>
 <body>
-<h1>로또 구매 테스트</h1>
 
+<h1>로또 구매 (테스트)</h1>
+
+<!-- 최근 금액으로 재구매 -->
+<div class="panel" th:if="${session.purchase != null}">
+    <h2>최근 금액으로 재구매</h2>
+    <p class="meta">
+        최근 발행 장수: <strong th:text="${session.purchase.issuedCount}">0</strong> 장
+        (총 <strong th:text="${session.purchase.issuedCount * 1000}">0</strong> 원)
+    </p>
+    <form th:action="@{/lottos/retry}" method="get" class="actions">
+        <button type="submit">최근 금액으로 다시 구매</button>
+    </form>
+</div>
+
+<!-- 예상 수익률 및 통계 -->
 <div class="panel" th:if="${expectedStats != null}">
     <h2>예상 수익률 및 누적 통계</h2>
-    <p th:if="${expectedStats.totalSamples == 0}">아직 집계할 기록이 없습니다.</p>
+
+    <p th:if="${expectedStats.totalSamples == 0}">아직 집계된 기록이 없습니다.</p>
 
     <div th:if="${expectedStats.totalSamples > 0}">
-        <p><strong>집계된 구매:</strong> <span th:text="${expectedStats.totalSamples}"></span> 회</p>
+        <p><strong>총 구매:</strong> <span th:text="${expectedStats.totalSamples}">0</span> 회</p>
         <p><strong>평균 수익률:</strong>
-            <span th:text="${#numbers.formatDecimal(expectedStats.averageReturnRate, 1, 1)}"></span>%</p>
+            <span th:text="${#numbers.formatDecimal(expectedStats.averageReturnRate, 1, 1)}">0.0</span>%</p>
 
-        <h3>등수별 누적 통계</h3>
         <table>
             <thead><tr><th>등수</th><th>누적 횟수</th></tr></thead>
             <tbody>
@@ -35,37 +56,103 @@
     </div>
 </div>
 
+<!-- 새 금액으로 구매 -->
+<div class="panel">
+    <h2>새 금액으로 구매</h2>
+    <form action="/lottos" method="post" id="purchaseForm" novalidate>
+        <label for="purchaseAmount">구매 금액(원): </label>
+        <input id="purchaseAmount" name="purchaseAmount" type="number" min="1000" step="1000" required>
+        <button type="submit" id="submitBtn">구매하기</button>
+        <div class="hint">로또 1장의 가격은 <span id="priceHint"></span>원입니다. (1000원 단위로 입력)</div>
+        <div class="meta">예상 발행 장수: <strong id="ticketCount">0</strong> 장</div>
+        <div class="error" id="amountError" aria-live="polite" style="display:none;"></div>
+    </form>
+</div>
 
-<form action="/lottos" method="post">
-    <label for="purchaseAmount">구매 금액 (단위: 원)</label><br>
-    <input type="number" id="purchaseAmount" name="purchaseAmount" min="1000" step="1000" required>
-    <div id="feedback" class="info"></div>
+<div class="actions">
+    <form action="/lottos/histories" method="get">
+        <button type="submit">최근 발행 내역 보기</button>
+    </form>
+</div>
 
-    <button type="submit">구매하기</button>
-</form>
+<!-- LOTTO_PRICE를 서버에서 주입(없으면 1000 fallback) -->
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const LOTTO_PRICE = /*[[${T(io.woohyeon.lotto.lotto_web.support.LottoRules).LOTTO_PRICE}]]*/ 1000;
+    /*]]>*/
+</script>
 
 <script>
-    const input = document.getElementById("purchaseAmount");
-    const feedback = document.getElementById("feedback");
-    const LOTTO_PRICE = 1000;
+    (function () {
+        const price = typeof LOTTO_PRICE === 'number' ? LOTTO_PRICE : 1000;
 
-    input.addEventListener("input", () => {
-        const value = Number(input.value);
+        const input = document.getElementById('purchaseAmount');
+        const ticketCountEl = document.getElementById('ticketCount');
+        const errorEl = document.getElementById('amountError');
+        const submitBtn = document.getElementById('submitBtn');
+        const form = document.getElementById('purchaseForm');
+        const priceHint = document.getElementById('priceHint');
+        priceHint.textContent = price.toLocaleString();
 
-        if (value === 0 || isNaN(value)) {
-            feedback.textContent = "";
-            return;
+        function validateAndPreview() {
+            const raw = input.value.trim();
+            if (raw === '') {
+                ticketCountEl.textContent = '0';
+                setError('');
+                disableSubmit(true);
+                return false;
+            }
+
+            const amount = Number(raw);
+
+            if (!Number.isFinite(amount) || amount <= 0) {
+                ticketCountEl.textContent = '0';
+                setError('양수 금액을 입력하세요.');
+                disableSubmit(true);
+                return false;
+            }
+
+            if (amount % price !== 0) {
+                const nearest = Math.floor(amount / price) * price;
+                ticketCountEl.textContent = String(Math.floor(amount / price));
+                setError(`금액은 ${price.toLocaleString()}원 단위여야 합니다. 예: ${nearest.toLocaleString()}원`);
+                disableSubmit(true);
+                return false;
+            }
+
+            const count = Math.floor(amount / price);
+            ticketCountEl.textContent = String(count);
+            setError('');
+            disableSubmit(false);
+            return true;
         }
 
-        if (value % LOTTO_PRICE !== 0) {
-            feedback.textContent = "1000원 단위로만 입력 가능합니다.";
-            feedback.className = "info error";
-        } else {
-            const count = value / LOTTO_PRICE;
-            feedback.textContent = `총 ${count}장의 로또를 구매할 수 있습니다.`;
-            feedback.className = "info valid";
+        function setError(msg) {
+            if (!msg) {
+                errorEl.style.display = 'none';
+                errorEl.textContent = '';
+            } else {
+                errorEl.style.display = 'block';
+                errorEl.textContent = msg;
+            }
         }
-    });
+
+        function disableSubmit(disabled) {
+            submitBtn.disabled = disabled;
+        }
+
+        input.addEventListener('input', validateAndPreview);
+
+        form.addEventListener('submit', function (e) {
+            if (!validateAndPreview()) {
+                e.preventDefault();
+            }
+        });
+
+        // 초기 렌더 상태 동기화
+        validateAndPreview();
+    })();
 </script>
+
 </body>
 </html>
