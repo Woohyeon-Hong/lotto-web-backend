@@ -5,6 +5,7 @@ import io.woohyeon.lotto.lotto_web.dto.response.LottoResultResponse;
 import io.woohyeon.lotto.lotto_web.dto.response.PurchaseResponse;
 import io.woohyeon.lotto.lotto_web.support.InputParser;
 import io.woohyeon.lotto.lotto_web.service.LottoService;
+import io.woohyeon.lotto.lotto_web.support.LottoStore;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import org.springframework.stereotype.Controller;
@@ -19,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class LottoController {
 
     private final LottoService lottoService;
+    private final LottoStore lottoStore;
 
-    public LottoController(LottoService lottoService) {
+    public LottoController(LottoService lottoService, LottoStore lottoStore) {
         this.lottoService = lottoService;
+        this.lottoStore = lottoStore;
     }
 
     @GetMapping()
@@ -60,8 +63,19 @@ public class LottoController {
 
         LottoResultResponse lottoResultResponse = lottoService.calculateStatisticsOf(
                 new LottoResultRequest(purchase.issuedLottos(), lottoNumbers, bonusNumber));
+
+        long historyId = lottoStore.save(purchase, lottoResultResponse);
+
         model.addAttribute("result", lottoResultResponse);
+        model.addAttribute("purchase", purchase);
+        model.addAttribute("historyId", historyId);
 
         return "result-test";
+    }
+
+    @GetMapping("/histories")
+    public String displayRecent(Model model) {
+        model.addAttribute("purchases", lottoStore.findRecentRecords());
+        return "purchase-history-test";
     }
 }
