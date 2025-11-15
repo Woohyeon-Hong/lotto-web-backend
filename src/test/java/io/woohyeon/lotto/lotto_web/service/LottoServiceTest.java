@@ -1,11 +1,13 @@
 package io.woohyeon.lotto.lotto_web.service;
 
+import static io.woohyeon.lotto.lotto_web.support.LottoRules.LOTTO_PRICE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import io.woohyeon.lotto.lotto_web.dto.request.LottoPurchaseRequest;
-import io.woohyeon.lotto.lotto_web.dto.response.LottoPurchaseResponse;
+import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
+import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.repository.ResultStore;
+import io.woohyeon.lotto.lotto_web.service.dto.response.PurchasesResponse;
 import io.woohyeon.lotto.lotto_web.support.LottoRules;
 import io.woohyeon.lotto.lotto_web.repository.PurchaseStore;
 import java.util.List;
@@ -50,7 +52,7 @@ class LottoServiceTest {
         //투입한 금액을 로또 가격으로 나눈 개수의 로또를 발행한다.
         for (int i = 0; i < purchaseResponses.size(); i++) {
             assertThat(purchaseResponses.get(i).lottoCount())
-                    .isEqualTo(corrects.get(i).purchaseAmount() / LottoRules.LOTTO_PRICE);
+                    .isEqualTo(corrects.get(i).purchaseAmount() / LOTTO_PRICE);
         }
 
         //1000의 배수인 자연수가 입력되지 않으면 예외가 발생한다.
@@ -59,6 +61,28 @@ class LottoServiceTest {
                                 () -> lottoService.purchaseLottosWith(wrong)
                         ).isInstanceOf(IllegalArgumentException.class)
         );
+    }
+    @Test
+    void getPurchases_구매_목록을_반환한다() {
+        //given
+        List<LottoPurchaseRequest> purchaseRequests = List.of(
+                new LottoPurchaseRequest(1000),
+                new LottoPurchaseRequest(2000),
+                new LottoPurchaseRequest(10000),
+                new LottoPurchaseRequest(11000)
+        );
+        purchaseRequests.forEach(request -> lottoService.purchaseLottosWith(request));
+
+        //when
+        PurchasesResponse result = lottoService.getPurchases();
+
+        //then
+        assertThat(result.count()).isEqualTo(purchaseRequests.size());
+
+        for (int i = 0; i < result.count(); i++) {
+            assertThat(result.purchases().get(i).LottoCount())
+                    .isEqualTo(purchaseRequests.get(i).purchaseAmount() / LOTTO_PRICE);
+        }
     }
 
 //    @Test

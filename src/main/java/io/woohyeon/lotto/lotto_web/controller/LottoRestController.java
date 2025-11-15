@@ -1,11 +1,13 @@
 package io.woohyeon.lotto.lotto_web.controller;
 
-import io.woohyeon.lotto.lotto_web.dto.request.LottoPurchaseRequest;
-import io.woohyeon.lotto.lotto_web.dto.response.LottoPurchaseResponse;
+import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
+import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.service.LottoService;
+import io.woohyeon.lotto.lotto_web.service.dto.response.PurchasesResponse;
 import java.net.URI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,5 +38,11 @@ public class LottoRestController {
                 .toUri();
 
         return ResponseEntity.created(locaation).build();
+    }
+
+    @GetMapping
+    public ResponseEntity<PurchasesResponse> getPurchases() {
+        PurchasesResponse response = lottoService.getPurchases();
+        return ResponseEntity.ok(response);
     }
 }

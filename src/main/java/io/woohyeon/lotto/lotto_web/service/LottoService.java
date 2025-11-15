@@ -1,12 +1,14 @@
 package io.woohyeon.lotto.lotto_web.service;
 
-import io.woohyeon.lotto.lotto_web.dto.request.LottoPurchaseRequest;
-import io.woohyeon.lotto.lotto_web.dto.response.LottoPurchaseResponse;
+import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
+import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.model.Lotto;
 import io.woohyeon.lotto.lotto_web.model.PurchaseAmount;
 import io.woohyeon.lotto.lotto_web.model.PurchaseLog;
 import io.woohyeon.lotto.lotto_web.model.ResultRecord;
 import io.woohyeon.lotto.lotto_web.repository.ResultStore;
+import io.woohyeon.lotto.lotto_web.service.dto.response.PurchaseSummaryResponse;
+import io.woohyeon.lotto.lotto_web.service.dto.response.PurchasesResponse;
 import io.woohyeon.lotto.lotto_web.support.LottoGenerator;
 import io.woohyeon.lotto.lotto_web.repository.PurchaseStore;
 import java.util.List;
@@ -41,6 +43,15 @@ public class LottoService {
                 log.getPurchasedAt()
         );
     }
+
+    public PurchasesResponse getPurchases() {
+        List<PurchaseSummaryResponse> summaries = purchaseStore.findAll().stream()
+                .map(PurchaseSummaryResponse::from)
+                .toList();
+
+        return PurchasesResponse.from(summaries);
+    }
+
 
 
     private PurchaseLog getPurchaseOrThrow(Long id) {

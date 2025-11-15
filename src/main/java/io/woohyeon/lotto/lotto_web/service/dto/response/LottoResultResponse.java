@@ -1,4 +1,4 @@
-package io.woohyeon.lotto.lotto_web.dto.response;
+package io.woohyeon.lotto.lotto_web.service.dto.response;
 
 import io.woohyeon.lotto.lotto_web.model.Rank;
 import io.woohyeon.lotto.lotto_web.support.LottoStatistics;
