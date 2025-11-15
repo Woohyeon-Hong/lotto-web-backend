@@ -8,7 +8,13 @@ public record IssuedLottoResponse(
         List<Integer> numbers,
         LocalDateTime issuedAt
 ) {
-    public static IssuedLottoResponse of(Lotto lotto, LocalDateTime issuedAt) {
+    public static IssuedLottoResponse from(Lotto lotto, LocalDateTime issuedAt) {
         return new IssuedLottoResponse(lotto.getNumbers(), issuedAt);
+    }
+
+    public static List<IssuedLottoResponse> from(List<Lotto> lottos, LocalDateTime issuedAt) {
+        return lottos.stream()
+                .map(lotto -> from(lotto, issuedAt))
+                .toList();
     }
 }

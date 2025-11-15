@@ -17,7 +17,7 @@ public record LottoPurchaseResponse(
                 amount,
                 lottos.size(),
                 lottos.stream()
-                        .map(lotto -> IssuedLottoResponse.of(lotto, createdAt))
+                        .map(lotto -> IssuedLottoResponse.from(lotto, createdAt))
                         .toList(),
                 createdAt
         );

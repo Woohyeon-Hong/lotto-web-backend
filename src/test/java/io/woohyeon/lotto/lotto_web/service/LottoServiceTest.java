@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
 import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.repository.ResultStore;
+import io.woohyeon.lotto.lotto_web.service.dto.response.PurchaseDetailResponse;
 import io.woohyeon.lotto.lotto_web.service.dto.response.PurchasesResponse;
 import io.woohyeon.lotto.lotto_web.support.LottoRules;
 import io.woohyeon.lotto.lotto_web.repository.PurchaseStore;
@@ -83,6 +84,20 @@ class LottoServiceTest {
             assertThat(result.purchases().get(i).LottoCount())
                     .isEqualTo(purchaseRequests.get(i).purchaseAmount() / LOTTO_PRICE);
         }
+    }
+
+    @Test
+    void getPurchase_구매_상세_조회를_한다() {
+        //given
+        LottoPurchaseRequest purchaseRequest = new LottoPurchaseRequest(10000);
+        LottoPurchaseResponse lottoPurchaseResponse = lottoService.purchaseLottosWith(purchaseRequest);
+
+        //when
+        PurchaseDetailResponse saved = lottoService.getPurchase(lottoPurchaseResponse.id());
+
+        //then
+        assertThat(saved.purchaseAmount()).isEqualTo(purchaseRequest.purchaseAmount());
+        assertThat(saved.LottoCount()).isEqualTo(purchaseRequest.purchaseAmount() / LOTTO_PRICE);
     }
 
 //    @Test

@@ -7,6 +7,7 @@ import io.woohyeon.lotto.lotto_web.model.PurchaseAmount;
 import io.woohyeon.lotto.lotto_web.model.PurchaseLog;
 import io.woohyeon.lotto.lotto_web.model.ResultRecord;
 import io.woohyeon.lotto.lotto_web.repository.ResultStore;
+import io.woohyeon.lotto.lotto_web.service.dto.response.PurchaseDetailResponse;
 import io.woohyeon.lotto.lotto_web.service.dto.response.PurchaseSummaryResponse;
 import io.woohyeon.lotto.lotto_web.service.dto.response.PurchasesResponse;
 import io.woohyeon.lotto.lotto_web.support.LottoGenerator;
@@ -52,7 +53,10 @@ public class LottoService {
         return PurchasesResponse.from(summaries);
     }
 
-
+    public PurchaseDetailResponse getPurchase(Long id) {
+        PurchaseLog log = getPurchaseOrThrow(id);
+        return PurchaseDetailResponse.from(log);
+    }
 
     private PurchaseLog getPurchaseOrThrow(Long id) {
         return purchaseStore.findById(id)
