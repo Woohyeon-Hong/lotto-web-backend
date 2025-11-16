@@ -1,17 +1,27 @@
 package io.woohyeon.lotto.lotto_web.service;
 
 import static io.woohyeon.lotto.lotto_web.support.LottoRules.LOTTO_PRICE;
+import static io.woohyeon.lotto.lotto_web.support.LottoRules.ROUNDING_SCALE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 
+import io.woohyeon.lotto.lotto_web.model.Lotto;
+import io.woohyeon.lotto.lotto_web.model.Rank;
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
+import io.woohyeon.lotto.lotto_web.service.dto.request.LottoResultRequest;
 import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.repository.ResultStore;
+import io.woohyeon.lotto.lotto_web.service.dto.response.LottoResultResponse;
 import io.woohyeon.lotto.lotto_web.service.dto.response.PurchaseDetailResponse;
 import io.woohyeon.lotto.lotto_web.service.dto.response.PurchasesResponse;
-import io.woohyeon.lotto.lotto_web.support.LottoRules;
 import io.woohyeon.lotto.lotto_web.repository.PurchaseStore;
+import io.woohyeon.lotto.lotto_web.support.LottoRules;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.List;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,6 +34,7 @@ class LottoServiceTest {
     @BeforeEach
     void beforeEach() {
         purchaseStore = new PurchaseStore();
+        resultStore = new ResultStore();
         lottoService = new LottoService(purchaseStore, resultStore);
     }
 
@@ -64,7 +75,7 @@ class LottoServiceTest {
         );
     }
     @Test
-    void getPurchases_구매_목록을_반환한다() {
+    void getPurchaseSummaries_구매_목록을_반환한다() {
         //given
         List<LottoPurchaseRequest> purchaseRequests = List.of(
                 new LottoPurchaseRequest(1000),
@@ -75,7 +86,7 @@ class LottoServiceTest {
         purchaseRequests.forEach(request -> lottoService.purchaseLottosWith(request));
 
         //when
-        PurchasesResponse result = lottoService.getPurchases();
+        PurchasesResponse result = lottoService.getPurchaseSummaries();
 
         //then
         assertThat(result.count()).isEqualTo(purchaseRequests.size());
@@ -87,17 +98,68 @@ class LottoServiceTest {
     }
 
     @Test
-    void getPurchase_구매_상세_조회를_한다() {
+    void getPurchaseDetail_구매_상세_조회를_한다() {
         //given
         LottoPurchaseRequest purchaseRequest = new LottoPurchaseRequest(10000);
         LottoPurchaseResponse lottoPurchaseResponse = lottoService.purchaseLottosWith(purchaseRequest);
 
         //when
-        PurchaseDetailResponse saved = lottoService.getPurchase(lottoPurchaseResponse.id());
+        PurchaseDetailResponse saved = lottoService.getPurchaseDetail(lottoPurchaseResponse.id());
 
         //then
         assertThat(saved.purchaseAmount()).isEqualTo(purchaseRequest.purchaseAmount());
         assertThat(saved.LottoCount()).isEqualTo(purchaseRequest.purchaseAmount() / LOTTO_PRICE);
+    }
+
+    @Test
+    void createResult_당첨_내역을_생성한다() {
+        //given
+
+        //로또 3 개의 번호를 임의로 지정한다.
+        List<Lotto> lottos = List.of(
+                new Lotto(List.of(1, 2, 3, 4, 5, 6)),
+                new Lotto(List.of(11, 12, 13, 14, 15, 16)),
+                new Lotto(List.of(20, 21, 22, 23, 24, 25))
+        );
+        Long savedPurchaseId = purchaseStore.save(lottos);
+
+        LottoResultRequest resultRequest = new LottoResultRequest(List.of(1, 2, 3, 4, 5, 6), 11);
+
+        //when
+        LottoResultResponse result = lottoService.createResult(savedPurchaseId, resultRequest);
+
+        //then
+        assertThat(result.purchaseAmount()).isEqualTo(3000);
+        assertThat(result.purchaseId()).isEqualTo(savedPurchaseId);
+    }
+
+    @Test
+    void createResult_수익률은_소수점_둘째자리까지_반올림해서_반환된다() {
+        // given
+        List<Lotto> lottos = List.of(
+                new Lotto(List.of(1, 2, 3, 4, 5, 6)),
+                new Lotto(List.of(11, 12, 13, 14, 15, 16)),
+                new Lotto(List.of(20, 21, 22, 23, 24, 25))
+        );
+        Long savedPurchaseId = purchaseStore.save(lottos);
+
+        LottoResultRequest resultRequest =
+                new LottoResultRequest(List.of(1, 2, 3, 4, 5, 6), 11);
+
+        int purchaseAmount = lottos.size() * LOTTO_PRICE;
+
+        // when
+        LottoResultResponse result = lottoService.createResult(savedPurchaseId, resultRequest);
+
+        // then
+        double rawReturnRate = (double) Rank.FIRST.getPrize() / purchaseAmount * 100;
+        double expectedRounded = BigDecimal.valueOf(rawReturnRate)
+                .setScale(ROUNDING_SCALE, RoundingMode.HALF_UP)
+                .doubleValue();
+
+        //부동 소수점 문제로 인해, 0.1까지는 오차 허용
+        assertThat(result.returnRate())
+                .isCloseTo(expectedRounded, within(0.1));
     }
 
 //    @Test
