@@ -5,6 +5,7 @@ import io.woohyeon.lotto.lotto_web.model.RankCount;
 import io.woohyeon.lotto.lotto_web.model.WinningNumbers;
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoResultRequest;
+import io.woohyeon.lotto.lotto_web.service.dto.response.ExpectedStatistics;
 import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.model.Lotto;
 import io.woohyeon.lotto.lotto_web.model.PurchaseAmount;
@@ -22,6 +23,7 @@ import io.woohyeon.lotto.lotto_web.support.LottoStatistics;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -127,6 +129,40 @@ public class LottoService {
                 resultRecord.getTotalPrize(),
                 resultRecord.getReturnRate(),
                 resultRecord.getRankCounts()
+        );
+    }
+
+    public ExpectedStatistics getStatistics() {
+        List<ResultRecord> results = resultStore.findAll();
+
+        int totalSamples = results.size();
+        if (totalSamples == 0) {
+            return new ExpectedStatistics(0, 0.0, List.of());
+        }
+
+        double averageReturnRate = results.stream()
+                .mapToDouble(ResultRecord::getReturnRate)
+                .average()
+                .orElse(0.0);
+
+        Map<Rank, Long> totals = new EnumMap<>(Rank.class);
+
+        for (ResultRecord result : results) {
+            for (RankCount rc : result.getRankCounts()) {
+                totals.merge(rc.rank(), rc.count(), Long::sum);
+            }
+        }
+
+        List<RankCount> accumulatedRankCounts = totals.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> new RankCount(entry.getKey(), entry.getValue()))
+                .toList();
+
+        return new ExpectedStatistics(
+                totalSamples,
+                averageReturnRate,
+                accumulatedRankCounts
         );
     }
 

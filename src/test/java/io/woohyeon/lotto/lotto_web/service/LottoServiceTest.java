@@ -8,8 +8,11 @@ import static org.assertj.core.api.Assertions.within;
 
 import io.woohyeon.lotto.lotto_web.model.Lotto;
 import io.woohyeon.lotto.lotto_web.model.Rank;
+import io.woohyeon.lotto.lotto_web.model.RankCount;
+import io.woohyeon.lotto.lotto_web.model.WinningNumbers;
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoResultRequest;
+import io.woohyeon.lotto.lotto_web.service.dto.response.ExpectedStatistics;
 import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.repository.ResultStore;
 import io.woohyeon.lotto.lotto_web.service.dto.response.LottoResultResponse;
@@ -101,7 +104,7 @@ class LottoServiceTest {
             PurchaseSummaryResponse summary = result.purchases().get(i);
 
             // ticketCount 검증
-            assertThat(summary.LottoCount())
+            assertThat(summary.lottoCount())
                     .isEqualTo(expectedAmountsDesc.get(i) / LOTTO_PRICE);
 
             // 아직 결과 생성 전이므로
@@ -121,7 +124,7 @@ class LottoServiceTest {
 
         //then
         assertThat(saved.purchaseAmount()).isEqualTo(purchaseRequest.purchaseAmount());
-        assertThat(saved.LottoCount()).isEqualTo(purchaseRequest.purchaseAmount() / LOTTO_PRICE);
+        assertThat(saved.lottoCount()).isEqualTo(purchaseRequest.purchaseAmount() / LOTTO_PRICE);
     }
 
     @Test
@@ -176,7 +179,7 @@ class LottoServiceTest {
     }
 
     @Test
-    void getResult() {
+    void getResult_당첨_내역을_조회한다() {
         //given
         List<Lotto> lottos = List.of(
                 new Lotto(List.of(1, 2, 3, 4, 5, 6)),
@@ -197,5 +200,75 @@ class LottoServiceTest {
         assertThat(result.purchaseId()).isEqualTo(resultResponse.purchaseId());
         assertThat(result.purchaseAmount()).isEqualTo(resultResponse.purchaseAmount());
         assertThat(result.returnRate()).isEqualTo(resultResponse.returnRate());
+    }
+
+    @Test
+    void getStatistics_결과가_없으면_빈_통계를_반환한다() {
+        // given && when
+        ExpectedStatistics stats = lottoService.getStatistics();
+
+        // then
+        assertThat(stats.totalSamples()).isEqualTo(0);
+        assertThat(stats.averageReturnRate()).isEqualTo(0.0);
+        assertThat(stats.accumulatedRankCounts()).isEmpty();
+    }
+
+    @Test
+    void getStatistics_결과가_있으면_누적된_통계를_반환한다() {
+        // given
+
+        // 첫 번째 결과 (1등 1개, NONE 2개)
+        resultStore.save(
+                1L,
+                new WinningNumbers(List.of(1, 2, 3, 4, 5, 6), 7),
+                2_000_000_000,
+                150.0,
+                List.of(
+                        new RankCount(Rank.FIRST, 1),
+                        new RankCount(Rank.NONE, 2)
+                )
+        );
+
+        // 두 번째 결과 (3등 1개, NONE 5개)
+        resultStore.save(
+                2L,
+                new WinningNumbers(List.of(1, 2, 3, 10, 11, 12), 42),
+                50_000_000,
+                80.0,
+                List.of(
+                        new RankCount(Rank.THIRD, 1),
+                        new RankCount(Rank.NONE, 5)
+                )
+        );
+
+        // 세 번째 결과 (5등 1개, NONE 20개)
+        resultStore.save(
+                3L,
+                new WinningNumbers(List.of(3, 4, 5, 6, 7, 8), 44),
+                5_000,
+                10.0,
+                List.of(
+                        new RankCount(Rank.FIFTH, 1),
+                        new RankCount(Rank.NONE, 20)
+                )
+        );
+
+        // when
+        ExpectedStatistics stats = lottoService.getStatistics();
+
+        // then
+        assertThat(stats.totalSamples()).isEqualTo(3);
+
+        // 평균 수익률: (150 + 80 + 10) / 3 = 80.0
+        assertThat(stats.averageReturnRate()).isEqualTo(80.0);
+
+        List<RankCount> accumulated = stats.accumulatedRankCounts();
+
+        assertThat(accumulated).containsExactlyInAnyOrder(
+                new RankCount(Rank.FIRST, 1),
+                new RankCount(Rank.THIRD, 1),
+                new RankCount(Rank.FIFTH, 1),
+                new RankCount(Rank.NONE, 27)
+        );
     }
 }
