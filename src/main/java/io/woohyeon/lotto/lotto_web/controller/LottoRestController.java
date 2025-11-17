@@ -2,6 +2,7 @@ package io.woohyeon.lotto.lotto_web.controller;
 
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoPurchaseRequest;
 import io.woohyeon.lotto.lotto_web.service.dto.request.LottoResultRequest;
+import io.woohyeon.lotto.lotto_web.service.dto.response.ExpectedStatistics;
 import io.woohyeon.lotto.lotto_web.service.dto.response.LottoPurchaseResponse;
 import io.woohyeon.lotto.lotto_web.service.LottoService;
 import io.woohyeon.lotto.lotto_web.service.dto.response.LottoResultResponse;
@@ -70,5 +71,11 @@ public class LottoRestController {
     public ResponseEntity<LottoResultResponse> getResult(@PathVariable("id") long id) {
         LottoResultResponse response = lottoService.getResult(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<ExpectedStatistics> getStatistics() {
+        ExpectedStatistics stats = lottoService.getStatistics();
+        return ResponseEntity.ok(stats);
     }
 }
